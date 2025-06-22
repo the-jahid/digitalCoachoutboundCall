@@ -352,7 +352,7 @@ const OverviewPage = () => {
   const [token, setToken] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
-  const [dateRange, setDateRange] = useState(getDefaultDateRange())
+  const [dateRange, ] = useState(getDefaultDateRange())
 
   // Memoized values
   const isConfigured = useMemo(() => {
