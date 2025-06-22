@@ -16,6 +16,8 @@ import Link from "next/link";
 import { useState } from "react";
 
 export default function NavbarDemo() {
+
+  // NavItems configuration Json
   const navItems = [
     {
       name: "Features",
