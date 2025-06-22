@@ -275,7 +275,7 @@ interface CallDetails {
   collectedInfo: Array<{
     id: string
     name: string
-    value: any
+     value: string | number | boolean | null
   }> | null
   tags: string[] | null
   isCallTransferred: boolean

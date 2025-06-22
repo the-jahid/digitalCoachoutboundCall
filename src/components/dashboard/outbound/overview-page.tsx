@@ -584,16 +584,7 @@ const OverviewPage = () => {
     setToken("")
   }, [])
 
-  // Update date range and refetch analytics
-  const handleDateRangeChange = useCallback(
-    (newRange: typeof dateRange) => {
-      setDateRange(newRange)
-      if (userData?.token && userData?.authId) {
-        fetchAnalytics(userData.token, userData.authId, newRange)
-      }
-    },
-    [userData, fetchAnalytics],
-  )
+
 
   // Initial data fetch
   useEffect(() => {
