@@ -275,7 +275,7 @@ interface CallDetails {
   collectedInfo: Array<{
     id: string
     name: string
-     value: string | number | boolean | null
+    value: string | number | boolean | null
   }> | null
   tags: string[] | null
   isCallTransferred: boolean
@@ -391,7 +391,14 @@ const getSentimentColor = (sentiment: number): string => {
 }
 
 const getRoleText = (role: number): string => {
-  return role === 1 ? "AI" : "Human"
+  switch (role) {
+    case 1:
+      return "AI"
+    case 2:
+      return "User"
+    default:
+      return "Unknown"
+  }
 }
 
 const formatTimestamp = (milliseconds: number): string => {
@@ -788,25 +795,41 @@ const CallsPage = () => {
 
   return (
     <>
-      <div className={`flex h-screen bg-gray-50 ${sidebarOpen ? "" : ""}`}>
+      <div className={`flex h-screen bg-gray-50 ${sidebarOpen ? "overflow-hidden" : ""}`}>
         {/* Main Content */}
-        <div className={`flex-1 flex flex-col ${sidebarOpen ? "mr-96" : ""}`}>
+        <div className={`flex-1 flex flex-col ${sidebarOpen ? "lg:mr-96" : ""} transition-all duration-300`}>
           {/* Header */}
-          <div className="bg-white border-b border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <h1 className="text-2xl font-bold">Calls</h1>
-                {totalCalls > 0 && <Badge variant="secondary">{totalCalls.toLocaleString()} total</Badge>}
+          <div className="bg-white border-b border-gray-200 p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <h1 className="text-xl sm:text-2xl font-bold">Calls</h1>
+                {totalCalls > 0 && (
+                  <Badge variant="secondary" className="text-xs sm:text-sm">
+                    {totalCalls.toLocaleString()} total
+                  </Badge>
+                )}
               </div>
               <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing || loading}>
-                  <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-                  Refresh
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  disabled={refreshing || loading}
+                  className="text-xs sm:text-sm bg-transparent"
+                >
+                  <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${refreshing ? "animate-spin" : ""}`} />
+                  <span className="hidden sm:inline">Refresh</span>
                 </Button>
                 {userData && (
-                  <Button variant="outline" size="sm" onClick={handleEditCredentials}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    {isConfigured ? "Edit Credentials" : "Add Credentials"}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditCredentials}
+                    className="text-xs sm:text-sm bg-transparent"
+                  >
+                    <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">{isConfigured ? "Edit Credentials" : "Add Credentials"}</span>
+                    <span className="sm:hidden">Config</span>
                   </Button>
                 )}
               </div>
@@ -820,14 +843,14 @@ const CallsPage = () => {
               <span>Loading user data...</span>
             </div>
           ) : userData ? (
-            <div className="bg-white border-b border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
+            <div className="bg-white border-b border-gray-200 p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
+                <div className="flex items-center space-x-2 sm:space-x-3">
                   <div className={`w-2 h-2 rounded-full ${isConfigured ? "bg-green-500" : "bg-orange-500"}`} />
-                  <span className="text-sm font-medium">{userData.username}</span>
-                  <span className="text-sm text-gray-500">{userData.email}</span>
+                  <span className="text-xs sm:text-sm font-medium truncate">{userData.username}</span>
+                  <span className="text-xs sm:text-sm text-gray-500 truncate hidden sm:inline">{userData.email}</span>
                 </div>
-                <div className="text-sm">
+                <div className="text-xs sm:text-sm">
                   <span className={`font-medium ${isConfigured ? "text-green-600" : "text-orange-600"}`}>
                     {isConfigured ? "✓ Configured" : "⚠ Setup Required"}
                   </span>
@@ -847,47 +870,49 @@ const CallsPage = () => {
 
           {/* Filters */}
           {isConfigured && (
-            <div className="bg-white border-b border-gray-200 p-4">
-              <div className="flex items-center space-x-4">
+            <div className="bg-white border-b border-gray-200 p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                 <div className="flex-1">
                   <Input
                     placeholder="Search calls..."
                     value={filters.searchInput}
                     onChange={(e) => handleFilterChange({ searchInput: e.target.value })}
-                    className="max-w-sm"
+                    className="w-full text-sm"
                   />
                 </div>
-                <Select
-                  value={filters.statuses.length > 0 ? filters.statuses[0].toString() : "all"}
-                  onValueChange={(value) =>
-                    handleFilterChange({ statuses: value === "all" ? [] : [Number.parseInt(value)] })
-                  }
-                >
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="4">Completed</SelectItem>
-                    <SelectItem value="6">Failed</SelectItem>
-                    <SelectItem value="3">In Progress</SelectItem>
-                    <SelectItem value="100">Success</SelectItem>
-                    <SelectItem value="150">Unreachable</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={filters.limit.toString()}
-                  onValueChange={(value) => handleFilterChange({ limit: Number.parseInt(value) })}
-                >
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex space-x-2 sm:space-x-4">
+                  <Select
+                    value={filters.statuses.length > 0 ? filters.statuses[0].toString() : "all"}
+                    onValueChange={(value) =>
+                      handleFilterChange({ statuses: value === "all" ? [] : [Number.parseInt(value)] })
+                    }
+                  >
+                    <SelectTrigger className="w-full sm:w-32 lg:w-40 text-sm">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="4">Completed</SelectItem>
+                      <SelectItem value="6">Failed</SelectItem>
+                      <SelectItem value="3">In Progress</SelectItem>
+                      <SelectItem value="100">Success</SelectItem>
+                      <SelectItem value="150">Unreachable</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={filters.limit.toString()}
+                    onValueChange={(value) => handleFilterChange({ limit: Number.parseInt(value) })}
+                  >
+                    <SelectTrigger className="w-16 sm:w-20 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           )}
@@ -898,68 +923,139 @@ const CallsPage = () => {
               callsLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                  <span>Loading calls...</span>
+                  <span className="text-sm sm:text-base">Loading calls...</span>
                 </div>
               ) : calls.length > 0 ? (
-                <div className="h-full overflow-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 sticky top-0">
-                      <tr>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">From</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">To</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Start Time</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Duration</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Conversation</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white">
-                      {calls.map((call) => (
-                        <tr
-                          key={call.id}
-                          className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
-                          onClick={() => handleCallClick(call)}
-                        >
-                          <td className="py-3 px-4 text-sm">{call.from || "N/A"}</td>
-                          <td className="py-3 px-4 text-sm">{call.to || "N/A"}</td>
-                          <td className="py-3 px-4 text-sm">{formatDate(call.startTime)}</td>
-                          <td className="py-3 px-4 text-sm">{formatDuration(call.duration)}</td>
-                          <td className="py-3 px-4">
-                            <Badge className={getStatusBadgeColor(call.status)}>{getStatusText(call.status)}</Badge>
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge variant="outline">{getConversationStatusText(call.conversationStatus)}</Badge>
-                          </td>
-                          <td className="py-3 px-4">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleCallClick(call)
-                              }}
-                            >
-                              <Phone className="h-4 w-4" />
-                            </Button>
-                          </td>
+                <>
+                  {/* Desktop Table View */}
+                  <div className="hidden lg:block h-full overflow-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">From</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">To</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Start Time</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Duration</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Conversation</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="bg-white">
+                        {calls.map((call) => (
+                          <tr
+                            key={call.id}
+                            className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                            onClick={() => handleCallClick(call)}
+                          >
+                            <td className="py-3 px-4 text-sm">{call.from || "N/A"}</td>
+                            <td className="py-3 px-4 text-sm">{call.to || "N/A"}</td>
+                            <td className="py-3 px-4 text-sm">{formatDate(call.startTime)}</td>
+                            <td className="py-3 px-4 text-sm">{formatDuration(call.duration)}</td>
+                            <td className="py-3 px-4">
+                              <Badge className={getStatusBadgeColor(call.status)}>{getStatusText(call.status)}</Badge>
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge variant="outline">{getConversationStatusText(call.conversationStatus)}</Badge>
+                            </td>
+                            <td className="py-3 px-4">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleCallClick(call)
+                                }}
+                              >
+                                <Phone className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="lg:hidden h-full overflow-auto p-3 sm:p-4 space-y-3">
+                    {calls.map((call) => (
+                      <div
+                        key={call.id}
+                        className="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => handleCallClick(call)}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-medium">
+                              {call.from?.slice(-2) || "??"}
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-gray-400" />
+                            <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-medium">
+                              {call.to?.slice(-2) || "??"}
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleCallClick(call)
+                            }}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-500">From → To</span>
+                            <span className="text-sm font-medium">
+                              {call.from || "N/A"} → {call.to || "N/A"}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-500">Duration</span>
+                            <span className="text-sm">{formatDuration(call.duration)}</span>
+                          </div>
+
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-500">Start Time</span>
+                            <span className="text-xs">{formatDate(call.startTime)}</span>
+                          </div>
+
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-500">Status</span>
+                            <Badge className={`${getStatusBadgeColor(call.status)} text-xs`}>
+                              {getStatusText(call.status)}
+                            </Badge>
+                          </div>
+
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-gray-500">Conversation</span>
+                            <Badge variant="outline" className="text-xs">
+                              {getConversationStatusText(call.conversationStatus)}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
-                <div className="flex items-center justify-center py-12">
+                <div className="flex items-center justify-center py-12 px-4">
                   <div className="text-center">
                     <Phone className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No calls found</h3>
-                    <p className="text-gray-500 mb-4">
+                    <p className="text-gray-500 mb-4 text-sm sm:text-base">
                       {filters.searchInput || filters.statuses.length > 0
                         ? "Try adjusting your filters"
                         : "No calls have been made yet"}
                     </p>
                     <Button
                       onClick={() => userData?.token && userData?.authId && fetchCalls(userData.token, userData.authId)}
+                      size="sm"
                     >
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Refresh
@@ -968,11 +1064,13 @@ const CallsPage = () => {
                 </div>
               )
             ) : (
-              <div className="flex items-center justify-center py-12">
+              <div className="flex items-center justify-center py-12 px-4">
                 <div className="text-center">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Setup Required</h3>
-                  <p className="text-gray-500 mb-4">Please configure your credentials to view calls</p>
-                  <Button onClick={handleEditCredentials}>
+                  <p className="text-gray-500 mb-4 text-sm sm:text-base">
+                    Please configure your credentials to view calls
+                  </p>
+                  <Button onClick={handleEditCredentials} size="sm">
                     <Edit className="h-4 w-4 mr-2" />
                     Add Credentials
                   </Button>
@@ -983,23 +1081,24 @@ const CallsPage = () => {
 
           {/* Pagination */}
           {isConfigured && totalCalls > 0 && (
-            <div className="bg-white border-t border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
+            <div className="bg-white border-t border-gray-200 p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+                <div className="text-xs sm:text-sm text-gray-600 order-2 sm:order-1">
                   Showing {filters.skip + 1} to {Math.min(filters.skip + filters.limit, totalCalls)} of{" "}
                   {totalCalls.toLocaleString()} calls
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 order-1 sm:order-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage <= 1}
+                    className="text-xs sm:text-sm"
                   >
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
+                    <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline ml-1">Previous</span>
                   </Button>
-                  <span className="text-sm">
+                  <span className="text-xs sm:text-sm px-2">
                     Page {currentPage} of {totalPages}
                   </span>
                   <Button
@@ -1007,9 +1106,10 @@ const CallsPage = () => {
                     size="sm"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage >= totalPages}
+                    className="text-xs sm:text-sm"
                   >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
+                    <span className="hidden sm:inline mr-1">Next</span>
+                    <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </div>
@@ -1019,202 +1119,265 @@ const CallsPage = () => {
 
         {/* Enhanced Sidebar */}
         {sidebarOpen && selectedCall && (
-          <div className="fixed right-0 top-0 h-full w-96 bg-white border-l border-gray-200 shadow-lg overflow-y-auto z-50">
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="flex items-center">
-                  <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-                    {selectedCall.from?.slice(-2) || "??"}
+          <>
+            {/* Mobile Overlay */}
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={closeSidebar} />
+
+            {/* Sidebar */}
+            <div className="fixed right-0 top-0 h-full w-full sm:w-96 lg:w-96 bg-white border-l border-gray-200 shadow-lg overflow-y-auto z-50 transform transition-transform duration-300">
+              <div className="p-3 sm:p-4 border-b border-gray-200 flex items-center justify-between">
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <div className="flex items-center">
+                    <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
+                      {selectedCall.from?.slice(-2) || "??"}
+                    </div>
+                    <ArrowRight className="h-4 w-4 mx-2 text-gray-400" />
+                    <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">
+                      {selectedCall.to?.slice(-2) || "??"}
+                    </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 mx-2 text-gray-400" />
-                  <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">
-                    {selectedCall.to?.slice(-2) || "??"}
+                  <div className="text-sm font-medium truncate">
+                    {selectedCall.from} → {selectedCall.to}
                   </div>
                 </div>
-                <div className="text-sm font-medium">
-                  {selectedCall.from} → {selectedCall.to}
-                </div>
+                <Button variant="ghost" size="sm" onClick={closeSidebar} className="ml-2 flex-shrink-0">
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" onClick={closeSidebar}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
 
-            <div className="p-4">
-              {callDetailsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                  <span>Loading call details...</span>
-                </div>
-              ) : callDetails ? (
-                <div className="space-y-6">
-                  {/* Summary Section */}
-                  {callDetails.summary && (
-                    <div>
-                      <h3 className="text-sm font-semibold mb-2">Summary</h3>
-                      <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">{callDetails.summary}</p>
-                    </div>
-                  )}
-
-                  {/* Call Details */}
-                  <div>
-                    <h3 className="text-sm font-semibold mb-3">Call Details</h3>
-                    <div className="space-y-2">
-                      {callDetails.name && (
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Name</span>
-                          <span className="text-sm font-medium">{callDetails.name}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Duration</span>
-                        <span className="text-sm font-medium">{formatDuration(callDetails.duration)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Start Time</span>
-                        <span className="text-sm">{formatDate(callDetails.startTime)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Status</span>
-                        <Badge className={getStatusBadgeColor(callDetails.status)}>
-                          {getStatusText(callDetails.status)}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Conversation</span>
-                        <Badge variant="outline">{getConversationStatusText(callDetails.conversationStatus)}</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Sentiment</span>
-                        <span className={`text-sm font-medium ${getSentimentColor(callDetails.overallSentiment)}`}>
-                          {getSentimentText(callDetails.overallSentiment)}
-                        </span>
-                      </div>
-                      {callDetails.isCallTransferred && (
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Transferred</span>
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                            Yes
-                          </Badge>
-                        </div>
-                      )}
-                      {callDetails.relatedId && (
-                        <div className="flex justify-between">
-                          <span className="text-sm text-gray-600">Related ID</span>
-                          <span className="text-xs font-mono text-gray-500">{callDetails.relatedId}</span>
-                        </div>
-                      )}
-                    </div>
+              <div className="p-3 sm:p-4">
+                {callDetailsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    <span className="text-sm">Loading call details...</span>
                   </div>
-
-                  {/* Collected Information */}
-                  {callDetails.collectedInfo && callDetails.collectedInfo.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold mb-3">Collected Information</h3>
-                      <div className="space-y-2">
-                        {callDetails.collectedInfo.map((info) => (
-                          <div key={info.id} className="flex justify-between">
-                            <span className="text-sm text-gray-600">{info.name}</span>
-                            <span className="text-sm font-medium">{String(info.value)}</span>
-                          </div>
-                        ))}
+                ) : callDetails ? (
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Summary Section */}
+                    {callDetails.summary && (
+                      <div>
+                        <h3 className="text-sm font-semibold mb-2">Summary</h3>
+                        <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg leading-relaxed">
+                          {callDetails.summary}
+                        </p>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Tags */}
-                  {callDetails.tags && callDetails.tags.length > 0 && (
+                    {/* Call Details */}
                     <div>
-                      <h3 className="text-sm font-semibold mb-2">Tags</h3>
-                      <div className="flex flex-wrap gap-1">
-                        {callDetails.tags.map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {tag}
+                      <h3 className="text-sm font-semibold mb-3">Call Details</h3>
+                      <div className="space-y-2">
+                        {callDetails.name && (
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                            <span className="text-sm text-gray-600">Name</span>
+                            <span className="text-sm font-medium">{callDetails.name}</span>
+                          </div>
+                        )}
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                          <span className="text-sm text-gray-600">Duration</span>
+                          <span className="text-sm font-medium">{formatDuration(callDetails.duration)}</span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                          <span className="text-sm text-gray-600">Start Time</span>
+                          <span className="text-sm">{formatDate(callDetails.startTime)}</span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                          <span className="text-sm text-gray-600">Status</span>
+                          <Badge className={getStatusBadgeColor(callDetails.status)}>
+                            {getStatusText(callDetails.status)}
                           </Badge>
-                        ))}
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                          <span className="text-sm text-gray-600">Conversation</span>
+                          <Badge variant="outline">{getConversationStatusText(callDetails.conversationStatus)}</Badge>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                          <span className="text-sm text-gray-600">Sentiment</span>
+                          <span className={`text-sm font-medium ${getSentimentColor(callDetails.overallSentiment)}`}>
+                            {getSentimentText(callDetails.overallSentiment)}
+                          </span>
+                        </div>
+                        {callDetails.isCallTransferred && (
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                            <span className="text-sm text-gray-600">Transferred</span>
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-800 w-fit">
+                              Yes
+                            </Badge>
+                          </div>
+                        )}
+                        {callDetails.relatedId && (
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                            <span className="text-sm text-gray-600">Related ID</span>
+                            <span className="text-xs font-mono text-gray-500 break-all">{callDetails.relatedId}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
 
-                  {/* Recording */}
-                  {callDetails.recording && (
-                    <div>
-                      <h3 className="text-sm font-semibold mb-2">Recording</h3>
-                      <div className="space-y-2">
-                        <audio controls className="w-full">
-                          <source src={callDetails.recording} type="audio/mpeg" />
-                          Your browser does not support the audio element.
-                        </audio>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => window.open(callDetails.recording!, "_blank")}
-                        >
-                          Download Recording
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Transcript */}
-                  {callDetails.transcript && callDetails.transcript.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold mb-3">Transcript</h3>
-                      <div className="space-y-3 max-h-96 overflow-y-auto">
-                        {callDetails.transcript.map((message, index) => (
-                          <div key={index} className="flex gap-3">
-                            <div
-                              className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium text-white ${
-                                message.role === 1 ? "bg-blue-500" : "bg-green-500"
-                              }`}
-                            >
-                              {getRoleText(message.role)}
+                    {/* Collected Information */}
+                    {callDetails.collectedInfo && callDetails.collectedInfo.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold mb-3">Collected Information</h3>
+                        <div className="space-y-2">
+                          {callDetails.collectedInfo.map((info) => (
+                            <div key={info.id} className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                              <span className="text-sm text-gray-600">{info.name}</span>
+                              <span className="text-sm font-medium break-words">{String(info.value)}</span>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="bg-gray-50 rounded-lg p-3">
-                                <p className="text-sm text-gray-900">{message.content}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tags */}
+                    {callDetails.tags && callDetails.tags.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold mb-2">Tags</h3>
+                        <div className="flex flex-wrap gap-1">
+                          {callDetails.tags.map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recording */}
+                    {callDetails.recording && (
+                      <div>
+                        <h3 className="text-sm font-semibold mb-2">Recording</h3>
+                        <div className="space-y-2">
+                          <audio controls className="w-full">
+                            <source src={callDetails.recording} type="audio/mpeg" />
+                            Your browser does not support the audio element.
+                          </audio>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full bg-transparent text-sm"
+                            onClick={() => window.open(callDetails.recording!, "_blank")}
+                          >
+                            Download Recording
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Transcript */}
+                    {callDetails.transcript && callDetails.transcript.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold mb-3">Transcript</h3>
+                        <div className="bg-gray-50 rounded-lg p-3 sm:p-4 max-h-64 sm:max-h-96 overflow-y-auto">
+                          {callDetails.transcript.map((message, index) => {
+                            // Role 1 = AI/Agent, Role 2 = User/Human - REVERSED
+                            const isAI = message.role === 1
+                            const isUser = message.role === 2
+                            const isSystem = message.role === 3
+
+                            // Define gradient backgrounds for different roles (REVERSED)
+                            let bgGradient = "bg-gradient-to-r from-gray-400 to-gray-500" // default/unknown
+                            let textColor = "text-white"
+                            let roleLabel = "Unknown"
+
+                            if (isAI) {
+                              // AI gets vibrant blue-purple gradient
+                              bgGradient = "bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-600"
+                              textColor = "text-white"
+                              roleLabel = "User" // Purple messages show as User
+                            } else if (isUser) {
+                              // User gets emerald-teal gradient
+                              bgGradient = "bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600"
+                              textColor = "text-white"
+                              roleLabel = "Agent" // Green messages show as Agent
+                            } else if (isSystem) {
+                              bgGradient = "bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-600"
+                              textColor = "text-white"
+                              roleLabel = "USER"
+                            }
+
+                            return (
+                              <div key={index} className="mb-3 sm:mb-4">
+                                {/* Role Label and Timestamp Header */}
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-xs font-medium text-gray-600">{roleLabel}</span>
+                                </div>
+
+                                {/* Message Content with Transparent Gradient Background */}
+                                <div
+                                  className={`${bgGradient} ${textColor} px-3 sm:px-4 py-2 sm:py-3 rounded-lg shadow-sm bg-opacity-90 backdrop-blur-sm`}
+                                >
+                                  <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                                </div>
                               </div>
-                              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>{formatTimestamp(message.startTime)}</span>
-                                <span>{formatTimestamp(message.endTime)}</span>
+                            )
+                          })}
+
+                          {/* Conversation Stats */}
+                          <div className="mt-4 pt-3 border-t border-gray-200">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs">
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded bg-gradient-to-br from-blue-500 to-indigo-600"></div>
+                                <span className="text-gray-600">
+                                  User: {callDetails.transcript.filter((m) => m.role === 1).length}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded bg-gradient-to-br from-emerald-500 to-teal-600"></div>
+                                <span className="text-gray-600">
+                                  Agent: {callDetails.transcript.filter((m) => m.role === 2).length}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded bg-gradient-to-r from-purple-500 to-purple-600"></div>
+                                <span className="text-gray-600">
+                                  USER: {callDetails.transcript.filter((m) => m.role === 3).length}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded bg-gradient-to-r from-gray-400 to-gray-500"></div>
+                                <span className="text-gray-600">Total: {callDetails.transcript.length}</span>
                               </div>
                             </div>
                           </div>
-                        ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Phone className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">Call Details</h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    {userData?.authId ? "Failed to load call details" : "Authentication required to view call details"}
-                  </p>
-                  {userData?.authId && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fetchCallDetails(selectedCall.id, userData.authId!)}
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Retry
-                    </Button>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Phone className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-sm font-medium text-gray-900 mb-2">Call Details</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      {userData?.authId
+                        ? "Failed to load call details"
+                        : "Authentication required to view call details"}
+                    </p>
+                    {userData?.authId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fetchCallDetails(selectedCall.id, userData.authId!)}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Retry
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         {/* Credentials Modal */}
         <Dialog open={showModal} onOpenChange={setShowModal}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] mx-4 sm:mx-0 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{isConfigured ? "Update Credentials" : "Setup Required"}</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">
+                {isConfigured ? "Update Credentials" : "Setup Required"}
+              </DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 {isConfigured
                   ? "Update your Auth ID and Token below."
                   : "Please provide your Auth ID and Token to complete your account setup and view calls."}
@@ -1222,17 +1385,22 @@ const CallsPage = () => {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="authId">Auth ID (Bearer Token)</Label>
+                <Label htmlFor="authId" className="text-sm">
+                  Auth ID (Bearer Token)
+                </Label>
                 <Input
                   id="authId"
                   value={authId}
                   onChange={(e) => setAuthId(e.target.value)}
                   placeholder="Enter your Auth ID"
                   disabled={submitting}
+                  className="text-sm"
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="token">Token (Outbound ID)</Label>
+                <Label htmlFor="token" className="text-sm">
+                  Token (Outbound ID)
+                </Label>
                 <Input
                   id="token"
                   type="password"
@@ -1240,14 +1408,20 @@ const CallsPage = () => {
                   onChange={(e) => setToken(e.target.value)}
                   placeholder="Enter your token"
                   disabled={submitting}
+                  className="text-sm"
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={handleCloseModal} disabled={submitting}>
+            <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={handleCloseModal}
+                disabled={submitting}
+                className="w-full sm:w-auto text-sm bg-transparent"
+              >
                 Cancel
               </Button>
-              <Button onClick={handleSubmitCredentials} disabled={!canSubmit}>
+              <Button onClick={handleSubmitCredentials} disabled={!canSubmit} className="w-full sm:w-auto text-sm">
                 {submitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
