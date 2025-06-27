@@ -390,24 +390,6 @@ const getSentimentColor = (sentiment: number): string => {
   }
 }
 
-const getRoleText = (role: number): string => {
-  switch (role) {
-    case 1:
-      return "AI"
-    case 2:
-      return "User"
-    default:
-      return "Unknown"
-  }
-}
-
-const formatTimestamp = (milliseconds: number): string => {
-  const totalSeconds = Math.floor(milliseconds / 1000)
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
-}
-
 // Main Component
 const CallsPage = () => {
   const { user, isLoaded } = useUser()
