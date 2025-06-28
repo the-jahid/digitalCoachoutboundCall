@@ -3,7 +3,6 @@
 // UI is based on Substy-style light theme with full feature integration
 'use client';
 
-import { useState } from "react";
 
 export default function Dashboard() {
 
