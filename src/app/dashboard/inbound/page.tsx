@@ -4,13 +4,9 @@
 'use client';
 
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 export default function Dashboard() {
-  const [creatorName, setCreatorName] = useState("");
+
  
 
   return (
